@@ -1,15 +1,3 @@
-"""
-AI Based Fake News Detection Tool
------------------------------------
-Internship Project 3 - CodeVedX
-
-Requirements:
-  pip install pandas scikit-learn
-
-Data model (news_data.csv):
-  id, text, label   (label is "Fake" or "Real")
-"""
-
 import os
 import re
 import pickle
