@@ -32,3 +32,9 @@ This was built as **Project 3** of my AI/ML Engineering Internship at **CodeVedX
 A Flask-based chatbot that answers employee IT, HR, and admin queries in real time using TF-IDF and cosine similarity to match questions to a trained FAQ knowledge base.
 
 This was built as **Project 4** of my AI/ML Engineering Internship at **CodeVedX**, focused on NLP fundamentals and backend integration.
+
+# Recommendation System - A Course Recommendation System
+
+A content-based course recommendation engine that suggests relevant courses based on a course you've already liked or a topic you want to learn. It uses TF-IDF vectorization and cosine similarity to match course categories, levels, and descriptions with learner intent, delivering personalized recommendations with a similarity score.
+
+This was built as **Project 5** of my AI/ML Engineering Internship at **CodeVedX**, bringing together data handling, ML similarity logic, and full-stack development into one complete web application.
