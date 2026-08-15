@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PathFinder — Smart Course Recommendation System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --indigo-900: #241b52;
+        --indigo-700: #4338ca;
+        --indigo-500: #6366f1;
+        --indigo-100: #eef0fd;
+        --coral: #f2683c;
+        --ink: #1e1b2e;
+        --muted: #6b6b7d;
+        --paper: #faf9fc;
+        --line: #e6e4ee;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: 'Inter', sans-serif;
+        min-height: 100vh;
+    }
+    .hero {
+        background: linear-gradient(160deg, var(--indigo-900), var(--indigo-700));
+        color: #fff;
+        padding: 60px 24px 76px;
+        text-align: center;
+    }
+    .eyebrow {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #c7c4f5;
+        margin: 0 0 10px;
+    }
+    .hero h1 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: clamp(30px, 5vw, 42px);
+        margin: 0 0 10px;
+        font-weight: 700;
+    }
+    .hero p {
+        color: rgba(255,255,255,0.78);
+        max-width: 540px;
+        margin: 0 auto;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    .search-wrap {
+        max-width: 740px;
+        margin: -40px auto 0;
+        padding: 0 24px;
+        position: relative;
+        z-index: 2;
+    }
+    .search-card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 22px;
+        box-shadow: 0 30px 60px -30px rgba(36, 27, 82, 0.35);
+    }
+    .tabs {
+        display: flex;
+        gap: 6px;
+        background: var(--indigo-100);
+        padding: 4px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+    }
+    .tab {
+        flex: 1;
+        text-align: center;
+        padding: 9px 10px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--indigo-700);
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+        user-select: none;
+    }
+    .tab.active {
+        background: var(--indigo-700);
+        color: #fff;
+        font-weight: 600;
+    }
+    .search-row { display: flex; gap: 10px; }
+    input[type=text] {
+        flex: 1;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        color: var(--ink);
+        padding: 12px 14px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-family: 'Inter', sans-serif;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+    input[type=text]::placeholder { color: #a3a1b3; }
+    input[type=text]:focus { border-color: var(--indigo-500); }
+    button.go {
+        background: var(--coral);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 0 22px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        font-family: 'Space Grotesk', sans-serif;
+        transition: filter 0.15s;
+    }
+    button.go:hover { filter: brightness(1.06); }
+    .hint {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: var(--muted);
+        margin: 10px 2px 0;
+    }
+
+    section { max-width: 1080px; margin: 0 auto; padding: 40px 24px; }
+    .section-title {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 18px;
+    }
+    .section-title h2 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 21px;
+        margin: 0;
+    }
+    .section-title span {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    #message {
+        display: none;
+        color: var(--muted);
+        font-size: 14px;
+        padding: 14px 16px;
+        border: 1px dashed var(--line);
+        border-radius: 10px;
+        margin-bottom: 18px;
+        background: #fff;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+    }
+    .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 18px;
+        transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    .card:hover {
+        transform: translateY(-3px);
+        border-color: var(--indigo-500);
+        box-shadow: 0 16px 30px -20px rgba(67, 56, 202, 0.35);
+    }
+    .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+    .cat-pill {
+        font-size: 10.5px;
+        padding: 4px 10px;
+        border-radius: 100px;
+        background: var(--indigo-100);
+        color: var(--indigo-700);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 500;
+    }
+    .level-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+    .level-Beginner { background: #e6f7ec; color: #17803d; }
+    .level-Intermediate { background: #fff4e0; color: #a45a06; }
+    .level-Advanced { background: #fde8e8; color: #b91c1c; }
+
+    .card-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 15.5px;
+        font-weight: 600;
+        margin: 0 0 8px;
+        line-height: 1.35;
+    }
+    .meta-row {
+        display: flex;
+        gap: 14px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 10px;
+    }
+    .meta-row .star { color: var(--coral); }
+    .desc {
+        font-size: 12.5px;
+        color: var(--muted);
+        line-height: 1.55;
+        margin: 0 0 12px;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .score-row { display: flex; align-items: center; gap: 8px; }
+    .score-bar {
+        flex: 1;
+        height: 5px;
+        background: var(--indigo-100);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    .score-fill { height: 100%; background: var(--indigo-700); }
+    .score-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: var(--indigo-700);
+        min-width: 36px;
+        text-align: right;
+    }
+
+    .catalog-filter {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+    .chip {
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 100px;
+        border: 1px solid var(--line);
+        color: var(--muted);
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        background: #fff;
+        transition: all 0.15s;
+    }
+    .chip.active, .chip:hover { border-color: var(--indigo-500); color: var(--indigo-700); }
+
+    footer {
+        text-align: center;
+        padding: 30px;
+        color: var(--muted);
+        font-size: 12px;
+        font-family: 'JetBrains Mono', monospace;
+        border-top: 1px solid var(--line);
+    }
+</style>
+</head>
+<body>
+
+<div class="hero">
+    <p class="eyebrow">codevedx</p>
+    <h1>PathFinder</h1>
+    <p>A content-based course recommendation engine — tell it a course you liked or describe what you want to learn, and it finds your next course using ML similarity scoring.</p>
+</div>
+
+<div class="search-wrap">
+    <div class="search-card">
+        <div class="tabs">
+            <div class="tab active" data-mode="title" onclick="setMode('title')">A course I liked</div>
+            <div class="tab" data-mode="text" onclick="setMode('text')">What I want to learn</div>
+        </div>
+        <div class="search-row">
+            <input type="text" id="queryInput" list="titleList" placeholder="e.g. Python Programming Fundamentals">
+            <button class="go" onclick="getRecommendations()">Recommend</button>
+        </div>
+        <datalist id="titleList">
+            {% for t in titles %}
+            <option value="{{ t }}">
+            {% endfor %}
+        </datalist>
+        <p class="hint" id="modeHint">Tip: pick a course from the catalog below, then search it here.</p>
+    </div>
+</div>
+
+<section>
+    <div class="section-title">
+        <h2>Recommended for you</h2>
+        <span id="resultCount"></span>
+    </div>
+    <div id="message"></div>
+    <div class="grid" id="resultsGrid"></div>
+</section>
+
+<section>
+    <div class="section-title">
+        <h2>Browse the catalog</h2>
+        <span>{{ catalog|length }} courses</span>
+    </div>
+    <div class="catalog-filter" id="categoryFilter"></div>
+    <div class="grid" id="catalogGrid"></div>
+</section>
+
+<footer>CodeVedX AI/ML Internship — Project 5 · Smart Course Recommendation System</footer>
+
+<script>
+    const catalog = {{ catalog | tojson }};
+    let currentMode = "title";
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelector(`.tab[data-mode="${mode}"]`).classList.add("active");
+        const input = document.getElementById("queryInput");
+        const hint = document.getElementById("modeHint");
+        if (mode === "title") {
+            input.placeholder = "e.g. Python Programming Fundamentals";
+            input.setAttribute("list", "titleList");
+            hint.textContent = "Tip: pick a course from the catalog below, then search it here.";
+        } else {
+            input.placeholder = "e.g. beginner friendly data analysis with python";
+            input.removeAttribute("list");
+            hint.textContent = "Tip: describe a topic, skill, or goal — no exact course name needed.";
+        }
+    }
+
+    function renderCard(item, showScore) {
+        const levelClass = "level-" + item.level;
+        const scoreBlock = showScore ? `
+            <div class="score-row">
+                <div class="score-bar"><div class="score-fill" style="width:${item.score}%"></div></div>
+                <div class="score-label">${item.score}%</div>
+            </div>` : "";
+        return `
+            <div class="card">
+                <div class="card-top">
+                    <span class="cat-pill">${item.category}</span>
+                    <span class="level-badge ${levelClass}">${item.level}</span>
+                </div>
+                <p class="card-title">${item.title}</p>
+                <div class="meta-row">
+                    <span>${item.duration_hours}h</span>
+                    <span><span class="star">&#9733;</span> ${item.rating}</span>
+                </div>
+                <p class="desc">${item.description}</p>
+                ${scoreBlock}
+            </div>`;
+    }
+
+    async function getRecommendations() {
+        const query = document.getElementById("queryInput").value.trim();
+        const messageBox = document.getElementById("message");
+        const grid = document.getElementById("resultsGrid");
+        const countLabel = document.getElementById("resultCount");
+
+        messageBox.style.display = "none";
+        grid.innerHTML = "";
+        countLabel.textContent = "";
+
+        if (!query) {
+            messageBox.textContent = "Please enter a course title or describe what you want to learn.";
+            messageBox.style.display = "block";
+            return;
+        }
+
+        try {
+            const response = await fetch("/recommend", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mode: currentMode, query: query })
+            });
+            const data = await response.json();
+
+            if (data.error) {
+                messageBox.textContent = data.error;
+                messageBox.style.display = "block";
+                return;
+            }
+
+            countLabel.textContent = data.results.length + " matches";
+            grid.innerHTML = data.results.map(item => renderCard(item, true)).join("");
+        } catch (err) {
+            messageBox.textContent = "Connection error. Please try again.";
+            messageBox.style.display = "block";
+        }
+    }
+
+    document.getElementById("queryInput").addEventListener("keydown", function(e) {
+        if (e.key === "Enter") getRecommendations();
+    });
+
+    // ---- Catalog browse section ----
+    function renderCatalog(filterCategory) {
+        const grid = document.getElementById("catalogGrid");
+        const items = filterCategory
+            ? catalog.filter(c => c.category === filterCategory)
+            : catalog;
+        grid.innerHTML = items.map(item => renderCard(item, false)).join("");
+    }
+
+    function buildCategoryFilter() {
+        const categorySet = new Set(catalog.map(c => c.category));
+        const filterBar = document.getElementById("categoryFilter");
+        const chips = ["All", ...Array.from(categorySet).sort()];
+        filterBar.innerHTML = chips.map((c, idx) =>
+            `<span class="chip ${idx === 0 ? 'active' : ''}" onclick="filterByCategory(this, '${c}')">${c}</span>`
+        ).join("");
+    }
+
+    function filterByCategory(el, category) {
+        document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+        el.classList.add("active");
+        renderCatalog(category === "All" ? null : category);
+    }
+
+    buildCategoryFilter();
+    renderCatalog(null);
+</script>
+</body>
+</html>
