@@ -1,16 +1,3 @@
-"""
-recommender.py
---------------
-Core recommendation logic for the Smart Course Recommendation System.
-
-Handles:
-  - Sample dataset generation (~45 courses across many categories)
-  - Loading & cleaning data
-  - Content-based profile building (category + level + description)
-  - TF-IDF vectorization + cosine similarity scoring
-  - Recommend-by-course-title and recommend-by-preference-text functions
-"""
-
 import os
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -18,10 +5,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 DATA_FILE = "courses_data.csv"
 
-
-# ---------------------------------------------------------------------------
-# Sample dataset generation
-# ---------------------------------------------------------------------------
 def create_sample_data():
     """Generates a ~45-course demo catalog spanning many categories, so the
     content-based filtering has real variety to work with. Replace
@@ -136,9 +119,6 @@ def create_sample_data():
     df.to_csv(DATA_FILE, index=False)
 
 
-# ---------------------------------------------------------------------------
-# Load and clean data
-# ---------------------------------------------------------------------------
 def load_data():
     try:
         df = pd.read_csv(DATA_FILE)
@@ -151,11 +131,8 @@ def load_data():
         return pd.DataFrame(columns=["id", "title", "category", "level", "duration_hours", "rating", "description"])
 
 
-# ---------------------------------------------------------------------------
-# Content-based profile building
-# ---------------------------------------------------------------------------
 def build_content_profiles(df):
-    # Category is repeated to give it more weight than level/description in similarity.
+  
     df["content_profile"] = (
         (df["category"].astype(str) + " ") * 2
         + df["level"].astype(str) + " "
@@ -167,9 +144,6 @@ def build_content_profiles(df):
     return vectorizer, item_vectors
 
 
-# ---------------------------------------------------------------------------
-# Recommend based on a course the user already took/liked
-# ---------------------------------------------------------------------------
 def recommend_by_title(title, df, item_vectors, top_n=6):
     matches = df[df["title"].str.lower() == title.strip().lower()]
     if matches.empty:
@@ -197,11 +171,6 @@ def recommend_by_title(title, df, item_vectors, top_n=6):
             "score": round(float(score) * 100, 1),
         })
     return results
-
-
-# ---------------------------------------------------------------------------
-# Recommend based on freeform user preference text
-# ---------------------------------------------------------------------------
 def recommend_by_preferences(preference_text, df, vectorizer, item_vectors, top_n=6):
     preference_vector = vectorizer.transform([preference_text])
     similarities = cosine_similarity(preference_vector, item_vectors)[0]
